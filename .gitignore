@@ -1,0 +1,15 @@
+# Never in GitHub
+config/secrets.php
+*.env
+.env*
+uploads/products/*
+!uploads/.htaccess
+.claude/
+*.zip
+*.log
+error_log
+.DS_Store
+Thumbs.db
+shots/
+_private/
+server-upload/

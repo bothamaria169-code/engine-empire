@@ -1,0 +1,170 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/settings.php';
+require_once __DIR__ . '/security.php';
+
+function startAppSession(): void
+{
+    if (session_status() === PHP_SESSION_ACTIVE) return;
+    session_name('ee_sess');
+    session_set_cookie_params([
+        'lifetime' => 0, 'path' => '/', 'httponly' => true, 'samesite' => 'Lax',
+        'secure' => !IS_LOCAL && (($_SERVER['HTTPS'] ?? '') !== '' && $_SERVER['HTTPS'] !== 'off'),
+    ]);
+    session_start();
+}
+
+function jsonResponse(array $data, int $status = 200): never
+{
+    http_response_code($status);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+function e(mixed $val): string
+{
+    return htmlspecialchars((string) $val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+function postText(string $key, int $len = 255): string
+{
+    return mb_substr(trim((string) ($_POST[$key] ?? '')), 0, $len);
+}
+
+/** URL of a file inside the site, with a cache-busting version for assets. */
+function asset(string $path): string
+{
+    $path = ltrim($path, '/');
+    $file = BASE_DIR . '/' . $path;
+    return APP_URL . '/' . $path . (is_file($file) && str_starts_with($path, 'assets/') && preg_match('/\.(css|js)$/', $path) ? '?v=' . filemtime($file) : '');
+}
+
+const CATEGORIES = [
+    'engine' => 'Engine',
+    'gearbox' => 'Gearbox',
+    'sub_assembly' => 'Sub assembly',
+    'turbo' => 'Turbo / injectors',
+    'parts' => 'Car parts',
+];
+const CATEGORY_ICONS = ['engine' => 'fa-gears', 'gearbox' => 'fa-gear', 'sub_assembly' => 'fa-screwdriver-wrench', 'turbo' => 'fa-wind', 'parts' => 'fa-car-side'];
+
+const FUELS = ['' => 'Not applicable', 'petrol' => 'Petrol', 'diesel' => 'Diesel'];
+
+const GRADES = ['' => 'Condition to confirm', 'new' => 'Brand new', 'reconditioned' => 'Reconditioned', 'used_a' => 'Used — low mileage (grade A)', 'used_b' => 'Used — tested (grade B)', 'used_c' => 'Used — as is (grade C)'];
+
+const DEFAULT_QUOTE_TERMS = 'Prices are in South African rand and exclude delivery unless stated. Stock is reserved only once the quote is accepted and the deposit or full amount is paid. Fitment is confirmed against the vehicle details above.';
+const DEFAULT_INVOICE_TERMS = 'Payment by EFT using the invoice number as reference. Goods remain the property of the seller until paid in full. The warranty covers the unit only, not fitting labour or damage from incorrect installation.';
+const DOC_TYPES = ['quote' => 'Quote', 'invoice' => 'Invoice'];
+const DOC_STATUSES = ['draft' => 'Draft', 'sent' => 'Sent', 'accepted' => 'Accepted', 'declined' => 'Declined', 'part_paid' => 'Part paid', 'paid' => 'Paid', 'cancelled' => 'Cancelled'];
+const PAY_METHODS = ['eft' => 'EFT', 'cash' => 'Cash', 'card' => 'Card', 'other' => 'Other'];
+
+const STOCK = ['available' => 'In stock', 'reserved' => 'Reserved', 'sold' => 'Sold', 'hidden' => 'Hidden'];
+
+const ENQUIRY_STATUSES = ['new' => 'New', 'contacted' => 'Contacted', 'quoted' => 'Quoted', 'paid' => 'Paid', 'dispatched' => 'Dispatched', 'completed' => 'Completed', 'cancelled' => 'Cancelled'];
+
+/** Company details printed on quotes and invoices (Admin → Settings → Business). */
+function business(): array
+{
+    return [
+        'name'    => get_setting('business_name', APP_NAME),
+        'address' => get_setting('business_address', ''),
+        'phone'   => get_setting('business_phone', get_setting('whatsapp_number', '')),
+        'email'   => get_setting('business_email', get_setting('contact_email', CONTACT_EMAIL)),
+        'vat_no'  => get_setting('vat_number', ''),
+        'reg_no'  => get_setting('company_reg', ''),
+        'vat_rate' => (float) get_setting('vat_rate', '15'),
+        'bank'    => array_filter([
+            'Bank' => get_setting('bank_name', ''), 'Account name' => get_setting('bank_account_name', ''),
+            'Account no.' => get_setting('bank_account_no', ''), 'Account type' => get_setting('bank_account_type', ''),
+            'Branch code' => get_setting('bank_branch_code', ''),
+        ]),
+    ];
+}
+
+function rands(float|string|null $n): string
+{
+    return 'R ' . number_format((float) $n, 2, '.', ' ');
+}
+
+const PROVINCES = ['Gauteng', 'Western Cape', 'KwaZulu-Natal', 'Eastern Cape', 'Free State', 'Limpopo', 'Mpumalanga', 'North West', 'Northern Cape'];
+
+function money(?string $price): string
+{
+    return $price === null || (float) $price <= 0 ? 'Get a quote' : 'R ' . number_format((float) $price, 2, '.', ' ');
+}
+
+function years(?int $from, ?int $to): string
+{
+    if (!$from && !$to) return 'All years';
+    if ($from && $to && $from !== $to) return $from . '–' . $to;
+    if ($from && !$to) return $from . '+';
+    return (string) ($from ?: $to);
+}
+
+/** WhatsApp click-to-chat link (empty when no number is set). */
+function whatsappLink(string $text = ''): string
+{
+    $n = preg_replace('/\D/', '', get_setting('whatsapp_number'));
+    if ($n === '') return '';
+    if (str_starts_with($n, '0')) $n = '27' . substr($n, 1);
+    return 'https://wa.me/' . $n . ($text !== '' ? '?text=' . rawurlencode($text) : '');
+}
+
+function audit(string $action, string $detail = ''): void
+{
+    try {
+        getDB()->prepare('INSERT INTO audit_log (user_id, action, detail, ip) VALUES (?, ?, ?, ?)')
+            ->execute([$_SESSION['uid'] ?? null, $action, mb_substr($detail, 0, 500), clientIp()]);
+    } catch (Throwable) {
+    }
+}
+
+/**
+ * Sends one plain-text email. SMTP comes from Admin → Settings → Email,
+ * falling back to secrets.php. Never throws: many hosts switch PHP's mail()
+ * off, so a failure comes back as a message instead of a 500 page.
+ *
+ * @return string '' when sent, otherwise the reason it failed
+ */
+function sendMail(string $to, string $subject, string $body, ?string $replyTo = null): string
+{
+    require_once __DIR__ . '/lib/PHPMailer/Exception.php';
+    require_once __DIR__ . '/lib/PHPMailer/PHPMailer.php';
+    require_once __DIR__ . '/lib/PHPMailer/SMTP.php';
+
+    $host = get_setting('smtp_host', SMTP_HOST);
+    $port = (int) get_setting('smtp_port', (string) SMTP_PORT) ?: 465;
+    $user = get_setting('smtp_user', SMTP_USER);
+    $pass = get_setting('smtp_pass', SMTP_PASS);
+
+    try {
+        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        $mail->CharSet = 'UTF-8';
+        if ($host !== '' && $user !== '' && $pass !== '') {
+            $mail->isSMTP();
+            $mail->Host = $host;
+            $mail->Port = $port;
+            $mail->SMTPAuth = true;
+            $mail->Username = $user;
+            $mail->Password = $pass;
+            $mail->SMTPSecure = $port === 465 ? PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS : PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Timeout = 20;
+        } elseif (function_exists('mail')) {
+            $mail->isMail();
+        } else {
+            return 'This server does not allow PHP mail(). Fill in the mailbox details under Admin → Settings → Email.';
+        }
+        $mail->setFrom($user !== '' ? $user : get_setting('contact_email', CONTACT_EMAIL), APP_NAME);
+        $mail->addAddress($to);
+        if ($replyTo) $mail->addReplyTo($replyTo);
+        $mail->Subject = $subject;
+        $mail->Body = $body;
+        $mail->send();
+        return '';
+    } catch (Throwable $e) {
+        error_log('EngineEmpire mail to ' . $to . ' failed: ' . $e->getMessage());
+        return $e->getMessage();
+    }
+}

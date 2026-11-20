@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /ajax/
+Disallow: /login.php
+Disallow: /doc.php
+
+Sitemap: https://engineempire.co.za/sitemap.xml

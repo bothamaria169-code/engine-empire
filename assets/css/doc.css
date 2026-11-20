@@ -1,0 +1,53 @@
+/* Quote / invoice sheet (customer view + print). Uses the tokens from style.css. */
+.docpage { background:var(--bg); }
+.doc-bar { position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:10px 16px; background:var(--surface); border-bottom:1px solid var(--line); }
+.doc-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.doc-wrap { max-width:900px; margin:0 auto; padding:24px 16px 64px; }
+.sheet-a4 { background:#fff; color:#0e1726; border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--e-2); padding:clamp(20px,5vw,48px); }
+.sheet-a4 h2 { font:700 11.5px/1 var(--font); text-transform:uppercase; letter-spacing:.1em; color:#637189; margin:0 0 8px; }
+.sheet-a4 p { margin:2px 0; font-size:14px; color:#4a5768; }
+.sheet-a4 .brand { color:#0e1726; margin-bottom:10px; }
+.doc-top { display:flex; justify-content:space-between; gap:24px; flex-wrap:wrap; padding-bottom:24px; border-bottom:3px solid var(--brand); }
+.doc-title { text-align:right; }
+.doc-title h1 { font-size:clamp(1.8rem,4vw,2.5rem); color:#c2410c; letter-spacing:.02em; }
+.doc-no { font:700 1.1rem var(--font-display)!important; color:#0e1726!important; margin:6px 0 10px!important; }
+.sheet-a4 .pill { color:#0e1726; }
+.doc-meta { display:grid; grid-template-columns:1fr auto; gap:24px; padding:24px 0; }
+.doc-meta dl { margin:0; display:grid; grid-template-columns:auto auto; gap:6px 24px; font-size:14px; align-content:start; }
+.doc-meta dt { color:#637189; }
+.doc-meta dd { margin:0; font-weight:700; text-align:right; }
+.doc-meta dd.due { color:#c2410c; font-size:1.1rem; }
+.doc-items { width:100%; border-collapse:collapse; font-size:14px; }
+.doc-items th { text-align:left; background:#f4f6fb; color:#4a5768; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:10px 12px; }
+.doc-items td { padding:12px; border-bottom:1px solid #e4e8f1; vertical-align:top; }
+.num { text-align:right!important; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.doc-sum { display:grid; grid-template-columns:1fr minmax(240px,300px); gap:32px; padding-top:20px; align-items:start; }
+.totals { width:100%; border-collapse:collapse; font-size:14.5px; }
+.totals td { padding:7px 0; }
+.totals .grand td { border-top:2px solid #0e1726; font:800 1.15rem var(--font-display); padding-top:12px; color:#0e1726; }
+.bank { margin:0 0 16px; display:grid; grid-template-columns:auto 1fr; gap:4px 16px; font-size:13.5px; }
+.bank dt { color:#637189; } .bank dd { margin:0; font-weight:600; }
+.doc-terms { margin-top:24px; padding-top:16px; border-top:1px solid #e4e8f1; }
+.doc-terms p { font-size:12.5px!important; }
+.doc-foot { margin-top:28px; text-align:center; font-size:13px; color:#637189; }
+.doc-accept { margin-top:20px; padding:20px; border-radius:var(--r-lg); display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+.pill { display:inline-block; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:700; background:#e4e8f1; }
+.pill.ok { background:#c9f0d6; } .pill.warn { background:#ffe7b3; } .pill.bad { background:#ffd0d2; } .pill.info { background:#ffdcc6; }
+
+@media (max-width: 640px) {
+  .doc-top,.doc-meta,.doc-sum { grid-template-columns:1fr; display:grid; }
+  .doc-title { text-align:left; }
+  .doc-meta dd { text-align:left; }
+  .doc-items thead { display:none; }
+  .doc-items,.doc-items tbody,.doc-items tr,.doc-items td { display:block; width:100%; }
+  .doc-items tr { padding:8px 0; border-bottom:1px solid #e4e8f1; }
+  .doc-items td { border:0; padding:3px 0; text-align:left!important; }
+}
+@media print {
+  @page { size:A4; margin:12mm; }
+  body,.docpage { background:#fff!important; }
+  .no-print,.wa-float { display:none!important; }
+  .doc-wrap { padding:0; max-width:none; }
+  .sheet-a4 { border:0; box-shadow:none; padding:0; border-radius:0; }
+  .doc-items tr,.totals { break-inside:avoid; }
+}

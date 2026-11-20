@@ -1,0 +1,8 @@
+deployment:
+  tasks:
+    - export DEPLOYPATH=$HOME/public_html/
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/cp -R admin ajax assets config database includes $DEPLOYPATH
+    - /bin/cp *.php robots.txt .htaccess .user.ini $DEPLOYPATH
+    - /bin/mkdir -p ${DEPLOYPATH}uploads/products
+    - /bin/cp uploads/.htaccess ${DEPLOYPATH}uploads/.htaccess
