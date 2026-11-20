@@ -45,7 +45,7 @@ siteHeader('index.php');
       <p>Search by vehicle, engine size or engine code.</p>
       <div class="field"><label for="f-q">Vehicle or engine code</label><input id="f-q" name="q" placeholder="e.g. Hilux 2.7, BFB, 1KD"></div>
       <div class="row2">
-        <div class="field"><label for="f-make">Make</label><select id="f-make" name="make"><option value="">All makes</option><?php foreach ($makes as $m => $n): ?><option value="<?= e($m) ?>"><?= e($m) ?></option><?php endforeach; ?></select></div>
+        <div class="field"><label for="f-make">Make</label><select id="f-make" name="make"><option value="">All makes</option><?php foreach ($makes as $m => $n): $m = (string) $m; ?><option value="<?= e($m) ?>"><?= e($m) ?></option><?php endforeach; ?></select></div>
         <div class="field"><label for="f-cat">Type</label><select id="f-cat" name="category"><option value="">Everything</option><?php foreach (CATEGORIES as $k => $l): ?><option value="<?= e($k) ?>"><?= e($l) ?></option><?php endforeach; ?></select></div>
       </div>
       <button class="btn btn-primary btn-block" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search stock</button>
@@ -100,7 +100,7 @@ siteHeader('index.php');
 <?php if ($makes): ?>
 <section class="sec"><div class="wrap">
   <div class="sec-head"><span class="eyebrow">Brands</span><h2>Shop by make</h2></div>
-  <div class="brands"><?php foreach ($makes as $m => $n): ?><a href="<?= e(APP_URL) ?>/shop.php?make=<?= e(rawurlencode($m)) ?>"><?= e($m) ?> <span style="color:var(--text-3)">(<?= (int) $n ?>)</span></a><?php endforeach; ?></div>
+  <?php arsort($makes); $topMakes = array_slice($makes, 0, 30, true); ksort($topMakes); ?><div class="brands"><?php foreach ($topMakes as $m => $n): $m = (string) $m; ?><a href="<?= e(APP_URL) ?>/shop.php?make=<?= e(rawurlencode($m)) ?>"><?= e($m) ?> <span style="color:var(--text-3)">(<?= (int) $n ?>)</span></a><?php endforeach; ?></div>
 </div></section>
 <?php endif; ?>
 

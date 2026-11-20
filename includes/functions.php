@@ -44,11 +44,12 @@ function asset(string $path): string
 const CATEGORIES = [
     'engine' => 'Engine',
     'gearbox' => 'Gearbox',
+    'heavy' => 'Truck, bus & industrial engine',
     'sub_assembly' => 'Sub assembly',
     'turbo' => 'Turbo / injectors',
     'parts' => 'Car parts',
 ];
-const CATEGORY_ICONS = ['engine' => 'fa-gears', 'gearbox' => 'fa-gear', 'sub_assembly' => 'fa-screwdriver-wrench', 'turbo' => 'fa-wind', 'parts' => 'fa-car-side'];
+const CATEGORY_ICONS = ['engine' => 'fa-gears', 'gearbox' => 'fa-gear', 'heavy' => 'fa-truck', 'sub_assembly' => 'fa-screwdriver-wrench', 'turbo' => 'fa-wind', 'parts' => 'fa-car-side'];
 
 const FUELS = ['' => 'Not applicable', 'petrol' => 'Petrol', 'diesel' => 'Diesel'];
 

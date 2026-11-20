@@ -6,7 +6,7 @@ declare(strict_types=1);
  * after a deploy, seeds the admin and the first catalogue.
  * No MySQL 8 reserved words as names (e.g. `condition` → `grade`).
  */
-const SCHEMA_VERSION = '2026-11-20.2';
+const SCHEMA_VERSION = '2026-11-20.3';
 
 function runMigrations(PDO $db): void
 {
@@ -224,19 +224,36 @@ function seedAdmin(PDO $db): void
        ->execute([ADMIN_EMAIL, password_hash($pw, PASSWORD_DEFAULT)]);
 }
 
-/** First catalogue from database/seed-products.json, only when the table is empty. Prices stay blank: "Get a quote". */
+/**
+ * Catalogue from database/seed-products.json (imported from the old southafricanengines.co.za shop: titles, prices, photos).
+ * Runs once: on an empty table, or when the table only holds the 12 original sample rows (never touches products you added).
+ */
 function seedProducts(PDO $db): void
 {
-    if ((int) $db->query('SELECT COUNT(*) FROM products')->fetchColumn() > 0) return;
+    if ($db->query("SELECT v FROM app_settings WHERE k = 'catalogue_import'")->fetchColumn()) return;
     $file = __DIR__ . '/seed-products.json';
     if (!is_file($file)) return;
     $items = json_decode((string) file_get_contents($file), true) ?: [];
-    $p = $db->prepare("INSERT INTO products (slug, title, make, model, engine_code, capacity, fuel, category, grade, warranty, description, stock_status, stock_checked_at)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'available', NOW())");
+    if (!$items) return;
+
+    $sampleSlugs = ['toyota-hilux-2-7-petrol-engine-2tr', 'toyota-hilux-3-0-diesel-engine-1kd', 'vw-polo-1-6-petrol-engine-bts', 'audi-a3-tt-1-8-turbo-engine-aum', 'audi-2-8-6-cyl-petrol-engine-amx',
+        'bmw-320i-2-0-petrol-engine-n46', 'ford-ranger-3-2-diesel-engine-p5at', 'nissan-np200-1-6-petrol-engine-k7m', 'hyundai-atos-picanto-1-1-sub-assembly-g4hg',
+        'audi-vw-1-8-turbo-manual-gearbox-bfb', 'alfa-romeo-2-0-5spd-gearbox', 'toyota-corolla-automatic-gearbox'];
+    $rows = $db->query('SELECT slug FROM products')->fetchAll(PDO::FETCH_COLUMN);
+    if ($rows && array_diff($rows, $sampleSlugs)) return; // the owner already has their own products: leave them alone
+    $db->beginTransaction();
+    $db->exec('DELETE FROM products'); // only the sample rows (checked above)
+    $p = $db->prepare("INSERT INTO products (slug, title, make, model, engine_code, capacity, fuel, category, grade, description, part_number, price, year_from, stock_status, stock_checked_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'available', NOW())");
+    $m = $db->prepare("INSERT INTO product_media (product_id, media_kind, path, sort_order) VALUES (?, 'image', ?, ?)");
     foreach ($items as $it) {
-        $p->execute([$it['slug'], $it['title'], $it['make'], $it['model'], $it['code'] ?? null, $it['cap'] ?? null, $it['fuel'] ?? null,
-                     $it['category'], $it['grade'] ?? null, $it['warranty'] ?? null, $it['desc'] ?? null]);
+        $p->execute([$it['slug'], $it['title'], $it['make'], $it['model'], $it['code'] ?? null, $it['cap'] ?? null, $it['fuel'] ?? null, $it['category'],
+                     $it['grade'] ?? null, $it['desc'] ?? null, $it['part'] ?? null, $it['price'] ?? null, $it['year'] ?? null]);
+        $id = (int) $db->lastInsertId();
+        foreach (($it['imgs'] ?? []) as $n => $path) $m->execute([$id, $path, $n]);
     }
+    $db->prepare("REPLACE INTO app_settings (k, v) VALUES ('catalogue_import', ?)")->execute([date('c')]);
+    $db->commit();
 }
 
 /** First-run defaults (never overwrites what the owner has saved in Admin → Settings). */
