@@ -6,7 +6,7 @@ declare(strict_types=1);
  * after a deploy, seeds the admin and the first catalogue.
  * No MySQL 8 reserved words as names (e.g. `condition` → `grade`).
  */
-const SCHEMA_VERSION = '2026-11-20.1';
+const SCHEMA_VERSION = '2026-11-20.2';
 
 function runMigrations(PDO $db): void
 {
@@ -202,6 +202,7 @@ function runMigrations(PDO $db): void
 
         seedAdmin($db);
         seedProducts($db);
+        seedSettings($db);
 
         $db->prepare("REPLACE INTO app_settings (k, v) VALUES ('schema_version', ?)")->execute([SCHEMA_VERSION]);
     } catch (Throwable $e) {
@@ -236,4 +237,14 @@ function seedProducts(PDO $db): void
         $p->execute([$it['slug'], $it['title'], $it['make'], $it['model'], $it['code'] ?? null, $it['cap'] ?? null, $it['fuel'] ?? null,
                      $it['category'], $it['grade'] ?? null, $it['warranty'] ?? null, $it['desc'] ?? null]);
     }
+}
+
+/** First-run defaults (never overwrites what the owner has saved in Admin → Settings). */
+function seedSettings(PDO $db): void
+{
+    $ins = $db->prepare('INSERT IGNORE INTO app_settings (k, v) VALUES (?, ?)');
+    foreach ([
+        'whatsapp_number' => '+27673192682', 'business_phone' => '+27 67 319 2682',
+        'contact_email' => 'admin@engine-empire.co.za', 'business_email' => 'admin@engine-empire.co.za',
+    ] as $k => $v) $ins->execute([$k, $v]);
 }

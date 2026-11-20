@@ -4,4 +4,4 @@ Disallow: /ajax/
 Disallow: /login.php
 Disallow: /doc.php
 
-Sitemap: https://engineempire.co.za/sitemap.xml
+Sitemap: https://engine-empire.co.za/sitemap.xml

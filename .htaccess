@@ -12,9 +12,9 @@ DirectoryIndex index.php
   RewriteEngine On
 
   # Live site: force https and drop "www." so Google sees one address
-  RewriteCond %{HTTP_HOST} ^www\.(engineempire.co.za)$ [NC]
+  RewriteCond %{HTTP_HOST} ^www\.(engine-empire.co.za)$ [NC]
   RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
-  RewriteCond %{HTTP_HOST} ^engineempire.co.za$ [NC]
+  RewriteCond %{HTTP_HOST} ^engine-empire.co.za$ [NC]
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !=https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]

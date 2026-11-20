@@ -39,7 +39,7 @@ Prices are entered **excluding VAT**. VAT is added at the rate on the document. 
 2. Copy `config/secrets.example.php` to `config/secrets.php`. Locally you only need `admin_seed_password`.
 3. Open `http://localhost/engine-empire/` (or run `php -S localhost:8766` in this folder).
 4. The database `engine-empire` is created for you on the first page load, with 12 sample products.
-5. Sign in at `/login.php` with `admin@swiftfusion.co.za` and your `admin_seed_password`.
+5. Sign in at `/login.php` with `admin@engine-empire.co.za` and your `admin_seed_password`.
 
 **Test:** open **Admin → Quotes & invoices → New quote**, add a line, press **Save quote**, then **Open PDF view**.
 
@@ -58,6 +58,7 @@ Open **Admin → Settings** and fill in, in this order: **Business details**, **
 | "Setup could not finish" page | The database user cannot create tables, or the database is not empty from an old site. Use a **new empty database** (guide section 1). |
 | Quote/invoice email "not sent" | Fill in the mailbox under **Settings → Email**, then **Send test email**. Use **Send on WhatsApp** meanwhile. |
 | Locked out of admin | Put `'admin_reset_password' => 'NewPassword123'` in `config/secrets.php`, load any page once, then remove the line. |
+| "MySQL refused the username or password (error 1045)" | In `config/secrets.php` on the server, `db_name` and `db_user` must be the FULL names with the cPanel prefix (e.g. `yourname_engines`), the user must be added to the database with **All Privileges**, and `db_pass` must be that user's password (re-set it in **MySQL® Databases → Change Password** and paste it again). |
 | Shop shows old placeholder products | Delete them under **Admin → Products** and add your own. |
 
 ## Not built yet (next phases)

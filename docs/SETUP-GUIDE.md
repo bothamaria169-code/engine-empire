@@ -14,7 +14,7 @@ Follow the sections in order. Each one ends with a test.
 | Google Search Console | Sitemap | `sitemap.xml` |
 | Your browser | Admin sign-in | `https://<your-domain>/login.php` |
 
-> The default domain in the code is `engineempire.co.za`. If the site goes live on `southafricanengines.co.za` or another domain, set `'app_url'` in `config/secrets.php` and change the two domain lines in `.htaccess` and the sitemap line in `robots.txt`.
+> The default domain in the code is `engine-empire.co.za`. If the site goes live on `southafricanengines.co.za` or another domain, set `'app_url'` in `config/secrets.php` and change the two domain lines in `.htaccess` and the sitemap line in `robots.txt`.
 
 ---
 
@@ -63,7 +63,7 @@ Follow the sections in order. Each one ends with a test.
 ## 4. Sign in and fill in your business (10 min) 🟩 ADMIN
 
 1. Open `https://<your-domain>/login.php`.
-2. Email `admin@swiftfusion.co.za`, password = your `admin_seed_password`.
+2. Email `admin@engine-empire.co.za`, password = your `admin_seed_password`.
 3. **Settings → Change my password** and set your own.
 4. **Settings → Business details**: name, phone, email, address, VAT number (blank if not registered).
 5. **Settings → Banking details**: bank, account name, number, type, branch code.

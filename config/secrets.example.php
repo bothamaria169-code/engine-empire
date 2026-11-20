@@ -15,10 +15,10 @@ return [
     'local_db_pass' => '',
 
     // Public address of the live site, no trailing slash
-    'app_url' => 'https://engineempire.co.za',
+    'app_url' => 'https://engine-empire.co.za',
 
     // Admin account: created on first page load if it doesn't exist yet.
-    'admin_email'         => 'admin@swiftfusion.co.za',
+    'admin_email'         => 'admin@engine-empire.co.za',
     'admin_seed_password' => 'CHANGE_ME',
 
     // Locked out of admin? Set a new password here and load any page once.
@@ -26,12 +26,12 @@ return [
     'admin_reset_emails'   => [],
 
     // Where customer enquiries are emailed
-    'contact_email' => 'info@engineempire.co.za',
+    'contact_email' => 'admin@engine-empire.co.za',
 
     // Mailbox that sends emails (cPanel → Email Accounts). Blank pass = PHP mail().
-    'smtp_host' => 'mail.engineempire.co.za',
+    'smtp_host' => 'mail.engine-empire.co.za',
     'smtp_port' => 465,
-    'smtp_user' => 'info@engineempire.co.za',
+    'smtp_user' => 'admin@engine-empire.co.za',
     'smtp_pass' => '',
 
     // Groq AI (console.groq.com → API Keys). Can also be set in Admin → Settings.

@@ -9,7 +9,7 @@ simpleTop();
 <div class="prose glass">
   <h1>Privacy policy</h1>
   <p>Last updated: <?= date('j F Y', filemtime(__FILE__)) ?></p>
-  <p><?= e(APP_NAME) ?> ("we") sells engines, gearboxes and car parts in South Africa through engineempire.co.za. This page explains what personal information we collect and what we do with it, in line with the Protection of Personal Information Act (POPIA).</p>
+  <p><?= e(APP_NAME) ?> ("we") sells engines, gearboxes and car parts in South Africa through engine-empire.co.za. This page explains what personal information we collect and what we do with it, in line with the Protection of Personal Information Act (POPIA).</p>
   <h2>What we collect</h2>
   <ul>
     <li><strong>Enquiries and orders:</strong> your name, cell number, optional email, town or suburb, your vehicle details and your message.</li>
