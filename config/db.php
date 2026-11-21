@@ -46,9 +46,9 @@ function adminResetFromSecrets(PDO $db): void
         $u = $db->prepare('SELECT id FROM users WHERE email = ?');
         $u->execute([$email]);
         if ($id = $u->fetchColumn()) {
-            $db->prepare("UPDATE users SET password_hash = ?, role = 'admin', is_active = 1 WHERE id = ?")->execute([$hash, $id]);
+            $db->prepare("UPDATE users SET password_hash = ?, role = 'admin', is_active = 1, must_change_password = 1, email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = ?")->execute([$hash, $id]);
         } else {
-            $db->prepare("INSERT INTO users (email, full_name, password_hash, role) VALUES (?, 'Administrator', ?, 'admin')")->execute([$email, $hash]);
+            $db->prepare("INSERT INTO users (email, full_name, password_hash, role, email_verified_at, must_change_password) VALUES (?, 'Administrator', ?, 'admin', NOW(), 1)")->execute([$email, $hash]);
         }
         $db->prepare('DELETE FROM login_attempts WHERE email = ?')->execute([$email]);
     }

@@ -44,9 +44,9 @@ if ($appUrl === '') {
 }
 define('APP_URL', rtrim($appUrl, '/'));
 
-define('ADMIN_EMAIL', strtolower((string) secret('admin_email', 'admin@engine-empire.co.za')));
+define('ADMIN_EMAIL', strtolower((string) secret('admin_email', 'info@engine-empire.co.za')));
 define('APP_SECRET', (string) secret('app_secret', 'change-me'));
-define('CONTACT_EMAIL', (string) secret('contact_email', 'admin@engine-empire.co.za'));
+define('CONTACT_EMAIL', (string) secret('contact_email', 'info@engine-empire.co.za'));
 
 // ── Database ─────────────────────────────────────────────────────
 define('DB_HOST', (string) secret('db_host', 'localhost'));

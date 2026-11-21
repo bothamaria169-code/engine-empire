@@ -47,7 +47,7 @@ Prices are entered **excluding VAT**. VAT is added at the rate on the document. 
 2. Copy `config/secrets.example.php` to `config/secrets.php`. Locally you only need `admin_seed_password`.
 3. Open `http://localhost/engine-empire/` (or run `php -S localhost:8766` in this folder).
 4. The database `engine-empire` is created for you on the first page load, with 12 sample products.
-5. Sign in at `/login.php` with `admin@engine-empire.co.za` and your `admin_seed_password`.
+5. Sign in at `/login.php` with `info@engine-empire.co.za` and your `admin_seed_password`.
 
 **Test:** open **Admin → Quotes & invoices → New quote**, add a line, press **Save quote**, then **Open PDF view**.
 

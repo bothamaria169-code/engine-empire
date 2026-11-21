@@ -38,13 +38,21 @@ function requireUser(): array
 {
     $u = currentUser();
     if (!$u) redirect('login.php?next=' . rawurlencode($_SERVER['REQUEST_URI'] ?? ''));
+    forcePasswordChange($u);
     return $u;
+}
+
+/** A one-time password (from secrets.php or given by an admin) must be replaced at the first sign-in. */
+function forcePasswordChange(array $u): void
+{
+    if (!empty($u['must_change_password']) && basename($_SERVER['SCRIPT_NAME'] ?? '') !== 'change-password.php') redirect('change-password.php');
 }
 
 function requireAdmin(): array
 {
     $u = currentUser();
     if (!$u) redirect('login.php?next=' . rawurlencode($_SERVER['REQUEST_URI'] ?? ''));
+    forcePasswordChange($u);
     if (!isStaff($u)) redirect('account.php');
     return $u;
 }
@@ -52,6 +60,7 @@ function requireAdmin(): array
 /** Where to send someone after sign-in. */
 function homeFor(array $u): string
 {
+    if (!empty($u['must_change_password'])) return 'change-password.php';
     return isStaff($u) ? 'admin/' : 'account.php';
 }
 

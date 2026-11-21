@@ -6,7 +6,7 @@ declare(strict_types=1);
  * after a deploy, seeds the admin and the first catalogue.
  * No MySQL 8 reserved words as names (e.g. `condition` → `grade`).
  */
-const SCHEMA_VERSION = '2026-11-21.1';
+const SCHEMA_VERSION = '2026-11-21.2';
 
 function runMigrations(PDO $db): void
 {
@@ -35,6 +35,7 @@ function runMigrations(PDO $db): void
                 reset_hash CHAR(64) NULL,
                 reset_expires DATETIME NULL,
                 consent_at DATETIME NULL,
+                must_change_password TINYINT(1) NOT NULL DEFAULT 0,
                 is_active TINYINT(1) NOT NULL DEFAULT 1,
                 last_login_at DATETIME NULL,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -242,9 +243,14 @@ function columnExists(PDO $db, string $table, string $col): bool
 /** Brings databases created by earlier versions up to date (customer accounts, quote status "invoiced"). */
 function upgradeSchema(PDO $db): void
 {
+    // The site's address is info@engine-empire.co.za: fix settings saved with the earlier placeholder addresses.
+    try {
+        $db->exec("UPDATE app_settings SET v = 'info@engine-empire.co.za' WHERE k IN ('contact_email','business_email') AND v IN ('admin@engine-empire.co.za','admin@engineempire.co.za','info@engineempire.co.za')");
+    } catch (Throwable) {
+    }
     foreach ([
         'phone' => 'VARCHAR(40) NULL', 'email_verified_at' => 'DATETIME NULL', 'verify_hash' => 'CHAR(64) NULL',
-        'reset_hash' => 'CHAR(64) NULL', 'reset_expires' => 'DATETIME NULL', 'consent_at' => 'DATETIME NULL',
+        'reset_hash' => 'CHAR(64) NULL', 'reset_expires' => 'DATETIME NULL', 'consent_at' => 'DATETIME NULL', 'must_change_password' => 'TINYINT(1) NOT NULL DEFAULT 0',
     ] as $col => $ddl) {
         if (!columnExists($db, 'users', $col)) $db->exec("ALTER TABLE users ADD COLUMN {$col} {$ddl}");
     }
@@ -295,6 +301,6 @@ function seedSettings(PDO $db): void
     $ins = $db->prepare('INSERT IGNORE INTO app_settings (k, v) VALUES (?, ?)');
     foreach ([
         'whatsapp_number' => '+27673192682', 'business_phone' => '+27 67 319 2682',
-        'contact_email' => 'admin@engine-empire.co.za', 'business_email' => 'admin@engine-empire.co.za',
+        'contact_email' => 'info@engine-empire.co.za', 'business_email' => 'info@engine-empire.co.za',
     ] as $k => $v) $ins->execute([$k, $v]);
 }
