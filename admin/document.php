@@ -34,6 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 logDocEvent($did, 'whatsapp', (string) $doc['cust_phone']);
                 if (waDigits($doc['cust_phone']) === '') { flash('err', 'This customer has no cell number.'); break; }
                 redirect(docWhatsappUrl($doc));
+            case 'set_status':
+                $err = setDocumentStatus($did, postText('status', 20), !empty($_POST['notify']));
+                audit('document_status', "#{$did} → " . postText('status', 20));
+                flash($err === '' ? 'ok' : 'err', $err === '' ? 'Status updated.' : $err);
+                break;
             case 'mark_sent':
                 $db->prepare("UPDATE documents SET status = 'sent' WHERE id = ? AND status = 'draft'")->execute([$did]);
                 logDocEvent($did, 'status', 'Marked as sent');
@@ -199,6 +204,12 @@ $v = fn(string $k) => e((string) ($d[$k] ?? ''));
     <h2>Status</h2>
     <p><?= pill(docStatusLabel($doc), docTone($doc)) ?> <small><?= (int) $doc['view_count'] ?> view<?= (int) $doc['view_count'] === 1 ? '' : 's' ?><?= $doc['viewed_at'] ? ' · first ' . e(date('j M H:i', strtotime((string) $doc['viewed_at']))) : '' ?></small></p>
     <p style="margin:10px 0 4px"><b><?= e(rands($doc['total'])) ?></b><?php if (!$isQuote): ?> · balance <b><?= e(rands($balance)) ?></b><?php endif; ?></p>
+    <form method="post" class="stack" style="margin-bottom:14px">
+      <?= csrfField() ?><input type="hidden" name="id" value="<?= (int) $doc['id'] ?>"><input type="hidden" name="action" value="set_status">
+      <div class="field"><label for="status">Set status</label><select id="status" name="status"><?php foreach ($isQuote ? QUOTE_STATUSES : INVOICE_STATUSES as $st): ?><option value="<?= $st ?>"<?= $st === $doc['status'] ? ' selected' : '' ?>><?= e($st === 'sent' && !$isQuote ? 'Sent (unpaid)' : DOC_STATUSES[$st]) ?></option><?php endforeach; ?></select></div>
+      <label class="check"><input type="checkbox" name="notify" value="1"<?= $doc['cust_email'] ? '' : ' disabled' ?>> <span>Email the customer about this change</span></label>
+      <button class="btn btn-dark btn-block">Update status</button>
+    </form>
     <form method="post" class="stack">
       <?= csrfField() ?><input type="hidden" name="id" value="<?= (int) $doc['id'] ?>">
       <button class="btn btn-primary btn-block" name="action" value="email"<?= $doc['cust_email'] ? '' : ' disabled' ?>><i class="fa-solid fa-envelope"></i> Email to customer</button>

@@ -13,6 +13,7 @@ const ADMIN_NAV = [
     'enquiries.php' => ['Enquiries', 'fa-inbox'],
     'documents.php' => ['Quotes & invoices', 'fa-file-invoice-dollar'],
     'customers.php' => ['Customers', 'fa-address-book'],
+    'users.php'     => ['Users & logins', 'fa-user-shield'],
     'products.php'  => ['Products', 'fa-gears'],
     'settings.php'  => ['Settings', 'fa-gear'],
     'audit.php'     => ['Audit log', 'fa-clipboard-list'],
@@ -59,7 +60,7 @@ function pill(string $text, string $tone = ''): string
 function docTone(array $d): string
 {
     if (docIsOverdue($d)) return 'bad';
-    return ['draft' => '', 'sent' => 'info', 'accepted' => 'ok', 'declined' => 'bad', 'part_paid' => 'warn', 'paid' => 'ok', 'cancelled' => 'bad'][$d['status']] ?? '';
+    return ['draft' => '', 'sent' => 'info', 'accepted' => 'ok', 'declined' => 'bad', 'invoiced' => 'ok', 'part_paid' => 'warn', 'paid' => 'ok', 'cancelled' => 'bad'][$d['status']] ?? '';
 }
 
 function docStatusLabel(array $d): string

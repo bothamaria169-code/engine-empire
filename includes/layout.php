@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/catalog.php';
+require_once __DIR__ . '/auth.php';
 
 /** <head> shared by every page. $o: canonical, image, schema (array), bodyClass, css, ogType, noindex */
 function pageHead(string $title, string $desc, array $o = []): void
@@ -110,6 +111,8 @@ function siteHeader(string $active = ''): void
     </nav>
     <div class="top-actions">
       <?php if ($phone): ?><a class="btn btn-ghost btn-sm" href="tel:<?= e(preg_replace('/[^\d+]/', '', $phone)) ?>"><i class="fa-solid fa-phone"></i> <span><?= e($phone) ?></span></a><?php endif; ?>
+      <?php $who = currentUser(); ?>
+      <a class="btn btn-ghost btn-sm" href="<?= e(APP_URL . '/' . ($who ? homeFor($who) : 'login.php')) ?>"><i class="fa-solid fa-user"></i> <span><?= $who ? (isStaff($who) ? 'Admin' : 'My account') : 'Sign in' ?></span></a>
       <a class="btn btn-primary btn-sm" href="<?= e(APP_URL) ?>/contact.php"><i class="fa-solid fa-file-invoice"></i> <span>Get a quote</span></a>
       <button class="icon-btn" data-theme-toggle aria-label="Switch light / dark theme"><i class="fa-solid fa-circle-half-stroke"></i></button>
       <button class="icon-btn menu-btn" data-menu aria-label="Menu" aria-controls="nav" aria-expanded="false"><i class="fa-solid fa-bars"></i></button>
@@ -135,7 +138,7 @@ function siteFooter(): void
         <?php foreach (CATEGORIES as $k => $l): ?><li><a href="<?= e(APP_URL) ?>/shop.php?category=<?= e($k) ?>"><?= e($l) ?></a></li><?php endforeach; ?></ul></div>
       <div><h3>Company</h3><ul>
         <li><a href="<?= e(APP_URL) ?>/about.php">About us</a></li><li><a href="<?= e(APP_URL) ?>/contact.php">Contact</a></li>
-        <li><a href="<?= e(APP_URL) ?>/privacy.php">Privacy</a></li><li><a href="<?= e(APP_URL) ?>/terms.php">Terms</a></li><li><a href="<?= e(APP_URL) ?>/login.php">Staff sign-in</a></li></ul></div>
+        <li><a href="<?= e(APP_URL) ?>/privacy.php">Privacy</a></li><li><a href="<?= e(APP_URL) ?>/terms.php">Terms</a></li><li><a href="<?= e(APP_URL) ?>/login.php">Sign in</a></li><li><a href="<?= e(APP_URL) ?>/register.php">Create an account</a></li></ul></div>
       <div><h3>Contact</h3><ul>
         <?php if ($phone): ?><li><i class="fa-solid fa-phone"></i> <a href="tel:<?= e(preg_replace('/[^\d+]/', '', $phone)) ?>"><?= e($phone) ?></a></li><?php endif; ?>
         <li><i class="fa-solid fa-envelope"></i> <a href="mailto:<?= e($mail) ?>"><?= e($mail) ?></a></li>
@@ -157,11 +160,12 @@ function enquiryForm(?array $product = null, string $title = 'Get a free quote',
   <p class="sub"><?= e($sub) ?></p>
   <input type="hidden" name="product_id" value="<?= (int) ($product['id'] ?? 0) ?>">
   <div class="row2">
-    <div class="field"><label for="q-name">Your name</label><input id="q-name" name="name" required autocomplete="name"></div>
-    <div class="field"><label for="q-phone">Cell number</label><input id="q-phone" name="phone" type="tel" inputmode="tel" required autocomplete="tel" placeholder="082 123 4567"></div>
+    <?php $me = currentUser(); ?>
+    <div class="field"><label for="q-name">Your name</label><input id="q-name" name="name" required autocomplete="name" value="<?= e($me['full_name'] ?? '') ?>"></div>
+    <div class="field"><label for="q-phone">Cell number</label><input id="q-phone" name="phone" type="tel" inputmode="tel" required autocomplete="tel" placeholder="082 123 4567" value="<?= e($me['phone'] ?? '') ?>"></div>
   </div>
   <div class="row2">
-    <div class="field"><label for="q-email">Email (optional)</label><input id="q-email" name="email" type="email" autocomplete="email"></div>
+    <div class="field"><label for="q-email">Email (optional)</label><input id="q-email" name="email" type="email" autocomplete="email" value="<?= e($me['email'] ?? '') ?>"></div>
     <div class="field"><label for="q-area">Town / suburb</label><input id="q-area" name="area" autocomplete="address-level2"></div>
   </div>
   <div class="field"><label for="q-vehicle">Vehicle (make, model, year)</label><input id="q-vehicle" name="vehicle" placeholder="e.g. Toyota Hilux 2.7 2012"></div>

@@ -53,7 +53,7 @@ $vatReg = (float) $doc['vat_rate'] > 0;
 $title = $isQuote ? 'Quote' : ($vatReg ? 'Tax invoice' : 'Invoice');
 $balance = max(0.0, (float) $doc['total'] - (float) $doc['amount_paid']);
 $overdue = docIsOverdue($doc);
-$tone = ['draft' => '', 'sent' => 'info', 'accepted' => 'ok', 'declined' => 'bad', 'part_paid' => 'warn', 'paid' => 'ok', 'cancelled' => 'bad'][$doc['status']] ?? '';
+$tone = ['draft' => '', 'sent' => 'info', 'accepted' => 'ok', 'declined' => 'bad', 'invoiced' => 'ok', 'part_paid' => 'warn', 'paid' => 'ok', 'cancelled' => 'bad'][$doc['status']] ?? '';
 $statusLabel = $overdue ? 'Overdue' : DOC_STATUSES[$doc['status']];
 $expired = $isQuote && $doc['due_date'] && $doc['due_date'] < date('Y-m-d') && $doc['status'] === 'sent';
 $wa = whatsappLink("Hi, about {$title} {$doc['doc_number']}.");

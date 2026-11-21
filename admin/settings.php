@@ -28,6 +28,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $to = get_setting('contact_email', CONTACT_EMAIL);
         $err = sendMail($to, 'Test email from ' . APP_NAME, "This is a test.\nEnquiries and quotes from the website are sent from this mailbox.");
         flash($err === '' ? 'ok' : 'err', $err === '' ? "Test email sent to {$to}. Check the inbox (and spam) in a minute." : "Email not sent: {$err} Enquiries are still saved under Enquiries.");
+    } elseif ($action === 'admin_email') {
+        $new = strtolower(postText('admin_email', 255));
+        $dup = getDB()->prepare('SELECT COUNT(*) FROM users WHERE email = ? AND id <> ?');
+        $dup->execute([$new, $ADMIN['id']]);
+        if (!filter_var($new, FILTER_VALIDATE_EMAIL)) flash('err', 'Enter a valid email address.');
+        elseif (!password_verify((string) ($_POST['current_password'] ?? ''), (string) $ADMIN['password_hash'])) flash('err', 'Your current password is not right.');
+        elseif ((int) $dup->fetchColumn() > 0) flash('err', 'Another user already has that email.');
+        else {
+            getDB()->prepare('UPDATE users SET email = ? WHERE id = ?')->execute([$new, $ADMIN['id']]);
+            if (!empty($_POST['also_contact'])) { set_setting('contact_email', $new); set_setting('business_email', $new); }
+            audit('admin_email_change', $ADMIN['email'] . ' → ' . $new);
+            flash('ok', 'Your admin email is now ' . $new . '. Use it to sign in from now on.');
+        }
     } elseif ($action === 'password') {
         $pw = (string) ($_POST['new_password'] ?? '');
         if (strlen($pw) < 10) flash('err', 'Use at least 10 characters.');
@@ -110,6 +123,17 @@ adminHead('Settings', 'settings.php');
     <button class="btn btn-ghost" name="action" value="test_ai">Test AI</button>
     <button class="btn btn-ghost" name="action" value="test_email">Send test email</button>
   </p>
+</form>
+
+<form method="post" class="card glass">
+  <?= csrfField() ?><input type="hidden" name="action" value="admin_email">
+  <h2>Admin email (my sign-in address)</h2>
+  <div class="fgrid">
+    <div class="field"><label for="admin_email">Admin email</label><input id="admin_email" name="admin_email" type="email" required value="<?= e($ADMIN['email']) ?>"></div>
+    <div class="field"><label for="ae_pw">Current password (to confirm)</label><input id="ae_pw" name="current_password" type="password" required autocomplete="current-password"></div>
+    <label class="check wide"><input type="checkbox" name="also_contact" value="1"> <span>Also send enquiries to this address and print it on quotes and invoices.</span></label>
+  </div>
+  <p style="margin-top:16px"><button class="btn btn-dark">Change admin email</button></p>
 </form>
 
 <form method="post" class="card glass">

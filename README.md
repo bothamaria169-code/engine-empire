@@ -14,7 +14,8 @@ A South African shop for tested engines, gearboxes and car parts, with a built-i
 | Contact / get a quote | `contact.php` → saves to Enquiries (`ajax/enquiry.php`) |
 | About, Privacy, Terms | `about.php`, `privacy.php`, `terms.php` |
 | Customer's quote / invoice page (print → PDF, Accept quote) | `doc.php?t=<secret token>` |
-| Admin sign-in | `login.php` |
+| Sign-in and registration (admin, staff and customers) | `login.php`, `register.php`, `verify.php`, `forgot-password.php`, `reset-password.php` |
+| Customer's account page | `account.php` |
 | Admin: dashboard, enquiries, **quotes & invoices**, customers, products, settings, audit log | `admin/` |
 | Quote and invoice logic (numbers, VAT, payments, WhatsApp/email) | `includes/documents.php` |
 | Database tables (created for you on first load) | `database/migrate.php` |
@@ -22,6 +23,13 @@ A South African shop for tested engines, gearboxes and car parts, with a built-i
 | Daily housekeeping | `cron.php` |
 | Colours, fonts, components | `assets/css/style.css` (`--brand` is the only colour to change) |
 | Quote / invoice sheet design | `assets/css/doc.css` |
+
+## Accounts and the owner's guide
+
+- **Customers** register at `/register.php`, confirm their email, and see only their own quotes and invoices (never drafts) in **My account**, each with a **View / PDF** button.
+- **Admin → Users & logins** adds staff and admins, changes roles, confirms emails, resets passwords. **Settings → Admin email** changes your sign-in address.
+- **Quote and invoice status** is set by hand on each document (**Set status**), like Durban's Pallets: quotes go Draft → Sent → Accepted → Invoiced; invoices Draft → Sent (unpaid) → Part paid → Paid.
+- **PDF guide for the owner, with screenshots:** [docs/Engine-Empire-Owner-Guide.pdf](docs/Engine-Empire-Owner-Guide.pdf)
 
 ## How a sale flows
 

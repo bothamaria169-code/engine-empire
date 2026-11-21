@@ -145,7 +145,46 @@ function saveDocument(array $in, ?int $id, int $userId): int
         throw $e;
     }
     refreshPaymentStatus($id);
+    linkDocumentToUser($id);
     return $id;
+}
+
+/** Attaches the document to the customer's account when a verified account with that email exists. */
+function linkDocumentToUser(int $docId): void
+{
+    getDB()->prepare("UPDATE documents d JOIN users u ON u.email = d.cust_email AND u.email_verified_at IS NOT NULL AND u.role = 'customer' SET d.user_id = u.id WHERE d.id = ?")->execute([$docId]);
+}
+
+/**
+ * Sets a status by hand (like Durban's Pallets). Marking an invoice paid records the outstanding balance as a payment,
+ * so the books agree. Optionally emails the customer about the change.
+ * @return string '' or a message for the admin
+ */
+function setDocumentStatus(int $id, string $status, bool $notify = false): string
+{
+    $db = getDB();
+    $d = docById($id);
+    if (!$d) return 'Document not found.';
+    $allowed = $d['doc_type'] === 'quote' ? QUOTE_STATUSES : INVOICE_STATUSES;
+    if (!in_array($status, $allowed, true)) return 'That status does not apply to a ' . $d['doc_type'] . '.';
+    if ($status === 'paid' && $d['doc_type'] === 'invoice') {
+        $bal = round((float) $d['total'] - (float) $d['amount_paid'], 2);
+        if ($bal > 0) addPayment($id, $bal, 'eft', 'Marked as paid', date('Y-m-d'));
+        $db->prepare("UPDATE documents SET status = 'paid' WHERE id = ?")->execute([$id]);
+    } else {
+        $db->prepare('UPDATE documents SET status = ? WHERE id = ?')->execute([$status, $id]);
+        if ($d['doc_type'] === 'invoice') refreshPaymentStatus($id);
+    }
+    logDocEvent($id, 'status', DOC_STATUSES[$d['status']] . ' → ' . DOC_STATUSES[$status]);
+    if ($notify && $d['cust_email']) {
+        $fresh = docById($id);
+        $word = $d['doc_type'] === 'quote' ? 'quote' : 'invoice';
+        $err = sendMail($d['cust_email'], ucfirst($word) . ' ' . $d['doc_number'] . ' is now ' . strtolower(DOC_STATUSES[$fresh['status']]),
+            "Hi " . (trim(explode(' ', trim((string) $d['cust_name']))[0] ?? '') ?: 'there') . ",\n\nYour {$word} {$d['doc_number']} is now: " . DOC_STATUSES[$fresh['status']] . ".\nView it here: " . docUrl($d) . "\n\n" . business()['name'], business()['email'] ?: null);
+        if ($err !== '') return 'Status saved, but the email failed: ' . $err;
+        logDocEvent($id, 'email', 'Status update to ' . $d['cust_email']);
+    }
+    return '';
 }
 
 function upsertCustomer(string $name, ?string $company, ?string $phone, ?string $email, ?string $address, ?string $vat): ?int
@@ -221,7 +260,8 @@ function convertToInvoice(int $quoteId, int $userId): int
     }
     logDocEvent($nid, 'created', 'From quote ' . $q['doc_number']);
     logDocEvent($quoteId, 'converted', 'Invoice created');
-    if ($q['status'] !== 'accepted') $db->prepare("UPDATE documents SET status = 'accepted' WHERE id = ?")->execute([$quoteId]);
+    $db->prepare("UPDATE documents SET status = 'invoiced' WHERE id = ?")->execute([$quoteId]);
+    linkDocumentToUser($nid);
     if ($q['enquiry_id']) $db->prepare("UPDATE enquiries SET status = 'quoted' WHERE id = ? AND status IN ('new','contacted')")->execute([$q['enquiry_id']]);
     return $nid;
 }

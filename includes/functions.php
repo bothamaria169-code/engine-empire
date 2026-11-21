@@ -58,7 +58,10 @@ const GRADES = ['' => 'Condition to confirm', 'new' => 'Brand new', 'recondition
 const DEFAULT_QUOTE_TERMS = 'Prices are in South African rand and exclude delivery unless stated. Stock is reserved only once the quote is accepted and the deposit or full amount is paid. Fitment is confirmed against the vehicle details above.';
 const DEFAULT_INVOICE_TERMS = 'Payment by EFT using the invoice number as reference. Goods remain the property of the seller until paid in full. The warranty covers the unit only, not fitting labour or damage from incorrect installation.';
 const DOC_TYPES = ['quote' => 'Quote', 'invoice' => 'Invoice'];
-const DOC_STATUSES = ['draft' => 'Draft', 'sent' => 'Sent', 'accepted' => 'Accepted', 'declined' => 'Declined', 'part_paid' => 'Part paid', 'paid' => 'Paid', 'cancelled' => 'Cancelled'];
+const DOC_STATUSES = ['draft' => 'Draft', 'sent' => 'Sent', 'accepted' => 'Accepted', 'declined' => 'Declined', 'invoiced' => 'Invoiced', 'part_paid' => 'Part paid', 'paid' => 'Paid', 'cancelled' => 'Cancelled'];
+/** The statuses staff can set by hand: quotes move draft → sent → accepted → invoiced; invoices draft → sent (unpaid) → part paid → paid. */
+const QUOTE_STATUSES = ['draft', 'sent', 'accepted', 'declined', 'invoiced', 'cancelled'];
+const INVOICE_STATUSES = ['draft', 'sent', 'part_paid', 'paid', 'cancelled'];
 const PAY_METHODS = ['eft' => 'EFT', 'cash' => 'Cash', 'card' => 'Card', 'other' => 'Other'];
 
 const STOCK = ['available' => 'In stock', 'reserved' => 'Reserved', 'sold' => 'Sold', 'hidden' => 'Hidden'];

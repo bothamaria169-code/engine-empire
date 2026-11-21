@@ -6,7 +6,7 @@ declare(strict_types=1);
  * after a deploy, seeds the admin and the first catalogue.
  * No MySQL 8 reserved words as names (e.g. `condition` → `grade`).
  */
-const SCHEMA_VERSION = '2026-11-20.3';
+const SCHEMA_VERSION = '2026-11-21.1';
 
 function runMigrations(PDO $db): void
 {
@@ -28,7 +28,13 @@ function runMigrations(PDO $db): void
                 email VARCHAR(255) NOT NULL UNIQUE,
                 full_name VARCHAR(120) NULL,
                 password_hash VARCHAR(255) NULL,
-                role ENUM('admin','staff') NOT NULL DEFAULT 'admin',
+                role ENUM('admin','staff','customer') NOT NULL DEFAULT 'customer',
+                phone VARCHAR(40) NULL,
+                email_verified_at DATETIME NULL,
+                verify_hash CHAR(64) NULL,
+                reset_hash CHAR(64) NULL,
+                reset_expires DATETIME NULL,
+                consent_at DATETIME NULL,
                 is_active TINYINT(1) NOT NULL DEFAULT 1,
                 last_login_at DATETIME NULL,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -125,7 +131,8 @@ function runMigrations(PDO $db): void
                 cust_email VARCHAR(255) NULL,
                 cust_address VARCHAR(400) NULL,
                 cust_vat_no VARCHAR(30) NULL,
-                status ENUM('draft','sent','accepted','declined','part_paid','paid','cancelled') NOT NULL DEFAULT 'draft',
+                status ENUM('draft','sent','accepted','declined','invoiced','part_paid','paid','cancelled') NOT NULL DEFAULT 'draft',
+                user_id INT UNSIGNED NULL,
                 issue_date DATE NOT NULL,
                 due_date DATE NULL,
                 vat_rate DECIMAL(5,2) NOT NULL DEFAULT 15.00,
@@ -200,6 +207,7 @@ function runMigrations(PDO $db): void
         ];
         foreach ($tables as $sql) $db->exec($sql);
 
+        upgradeSchema($db);
         seedAdmin($db);
         seedProducts($db);
         seedSettings($db);
@@ -220,8 +228,33 @@ function seedAdmin(PDO $db): void
     $s = $db->prepare('SELECT COUNT(*) FROM users WHERE email = ?');
     $s->execute([ADMIN_EMAIL]);
     if ((int) $s->fetchColumn() > 0) return;
-    $db->prepare("INSERT INTO users (email, full_name, password_hash, role) VALUES (?, 'Administrator', ?, 'admin')")
+    $db->prepare("INSERT INTO users (email, full_name, password_hash, role, email_verified_at) VALUES (?, 'Administrator', ?, 'admin', NOW())")
        ->execute([ADMIN_EMAIL, password_hash($pw, PASSWORD_DEFAULT)]);
+}
+
+function columnExists(PDO $db, string $table, string $col): bool
+{
+    $s = $db->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+    $s->execute([$table, $col]);
+    return (int) $s->fetchColumn() > 0;
+}
+
+/** Brings databases created by earlier versions up to date (customer accounts, quote status "invoiced"). */
+function upgradeSchema(PDO $db): void
+{
+    foreach ([
+        'phone' => 'VARCHAR(40) NULL', 'email_verified_at' => 'DATETIME NULL', 'verify_hash' => 'CHAR(64) NULL',
+        'reset_hash' => 'CHAR(64) NULL', 'reset_expires' => 'DATETIME NULL', 'consent_at' => 'DATETIME NULL',
+    ] as $col => $ddl) {
+        if (!columnExists($db, 'users', $col)) $db->exec("ALTER TABLE users ADD COLUMN {$col} {$ddl}");
+    }
+    $db->exec("ALTER TABLE users MODIFY role ENUM('admin','staff','customer') NOT NULL DEFAULT 'customer'");
+    $db->exec("UPDATE users SET email_verified_at = COALESCE(email_verified_at, NOW()) WHERE role IN ('admin','staff')");
+    if (!columnExists($db, 'documents', 'user_id')) {
+        $db->exec('ALTER TABLE documents ADD COLUMN user_id INT UNSIGNED NULL, ADD INDEX (user_id)');
+    }
+    $db->exec("ALTER TABLE documents MODIFY status ENUM('draft','sent','accepted','declined','invoiced','part_paid','paid','cancelled') NOT NULL DEFAULT 'draft'");
+    $db->exec("UPDATE documents q SET q.status = 'invoiced' WHERE q.doc_type = 'quote' AND q.status = 'accepted' AND EXISTS (SELECT 1 FROM (SELECT converted_from FROM documents WHERE converted_from IS NOT NULL AND status <> 'cancelled') i WHERE i.converted_from = q.id)");
 }
 
 /**
